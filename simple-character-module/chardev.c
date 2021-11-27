@@ -35,6 +35,8 @@ struct file_operations character_device_fops = {
  */
 
 static int __init char_driver_init(void) {
+    int ret;
+
     pr_info("Initializing pseudo charater driver");
     /**
      * Dynamically allocate a new charater device region. This will later be used to tie the driver to the VFS.  
@@ -47,8 +49,6 @@ static int __init char_driver_init(void) {
      * A register_chrdev_region() function exist but is only useful if you already know the numbers. 
      * Best practice to avoid collisions is to use the alloc_ function.
      */
-    
-    int ret;
     
     if((ret = alloc_chrdev_region(&device_number, 0, 1, "pseudo_character_driver")) < 0) {
         pr_err("Unable to allocate region for pseudo character device");
@@ -67,7 +67,7 @@ static int __init char_driver_init(void) {
      * Third parameter is the number of devices
      */
     character_device.owner = THIS_MODULE;
-    if((ret = cdev_add(&character_device, device_number, 1)) < 0){ 
+    if((ret = cdev_add(&character_device, device_number, 1)) < 0) { 
         pr_err("Unable add pseudo character device");
         return ret;
     }
