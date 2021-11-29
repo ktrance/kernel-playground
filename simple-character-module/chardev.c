@@ -5,25 +5,57 @@
  * Include the search paths to your development environment config. 
  * For VSCode it does not work optimally as you cannot specify $(uname -r) in the paths, 
  * and need to upgrade the paths manually after kernel upgrade.
+ * 
+ * TODO: Ths driver ONLY supports one device right now....
  */
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
+#include <linux/uaccess.h>
 
 #define DEVICE_MEMORY_SIZE 1024
-
-char device_buffer[DEVICE_MEMORY_SIZE];
+char device_buffer[DEVICE_MEMORY_SIZE]; 
 
 dev_t device_number;
 
 struct cdev character_device;
+
+static int char_open(struct inode *i, struct file *f) {
+    int minor = MINOR(i->i_rdev);
+    pr_info("Pseudo character device open minor = %d", minor);
+
+    //todo:
+
+    return 0;
+}
+
+static int char_close(struct inode *i, struct file *f) {
+    int minor = MINOR(i->i_rdev);
+    
+    pr_info("Pseudo character device close minor = %d", minor);
+
+    //todo:
+    return 0;
+}
+
+static ssize_t char_read(struct file *f, char __user *buf, size_t len, loff_t *f_pos) {
+
+    char memory_buffer = 'a';
+
+    if(*f_pos >= DEVICE_MEMORY_SIZE) {
+        return 0;
+    }
+
+    copy_to_user(buf, &memory_buffer, 1);
+    *f_pos+=1;
+    return 1;
+}
+
 struct file_operations character_device_fops = {
     .owner =    THIS_MODULE,
-    // .llseek =   char_llseek,
-    // .read =     char__read,
-    // .write =    char_write,
-    // .open =     char_open,
-    // .release =  char_release,
+    .read =     char_read,
+    .open =     char_open,
+    .release =  char_close,
 };
 
 /**
@@ -71,31 +103,22 @@ static int __init char_driver_init(void) {
         pr_err("Unable add pseudo character device");
         return ret;
     }
+
     return 0;
 }
 
-
-
-
 /**
- * TODO: the driver should support 
- * 1. open (strictly not necessary)
- * 2. seek
- * 3. read(sync)
- * 4. write(sync) 
- * 5. nmap ??
+ * todo: remember to use printk_ratelimit() before printing messages
  */
 
-static void __exit char_driver_cleanup(void) {
+//done
+static void __exit char_driver_exit(void) {
     pr_info("Cleaning up pseudo charater driver");
-    //todo:
-    //unregister_chrdev_region
-    //cdev_del ?
+    cdev_del(&character_device);
+    unregister_chrdev_region(device_number, 1);
 }
 
-//int char_driver_open()
-
 module_init(char_driver_init);
-module_exit(char_driver_cleanup);
+module_exit(char_driver_exit);
 
 MODULE_LICENSE("GPL");
