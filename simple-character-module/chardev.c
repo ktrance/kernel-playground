@@ -1,5 +1,5 @@
 /**
- * This file contains a simple pseudo charater device driver
+ * This file contains a simple pseudo character device driver
  * 
  * Kernel modules have a different include path than user land development. 
  * Include the search paths to your development environment config. 
@@ -22,7 +22,8 @@ struct cdev character_device;
 
 static int char_open(struct inode *i, struct file *f) {
     int minor = MINOR(i->i_rdev);
-    pr_info("Pseudo character device open minor = %d", minor);
+    int major = MAJOR(i->i_rdev);
+    pr_info("pseudo character device open (major, minor) (%d, %d)\n", major, minor);
 
     //todo:
 
@@ -31,8 +32,9 @@ static int char_open(struct inode *i, struct file *f) {
 
 static int char_close(struct inode *i, struct file *f) {
     int minor = MINOR(i->i_rdev);
+    int major = MAJOR(i->i_rdev);
     
-    pr_info("Pseudo character device close minor = %d", minor);
+    pr_info("pseudo character device close (major, minor) (%d, %d)\n", major, minor);
 
     //todo:
     return 0;
@@ -69,7 +71,7 @@ struct file_operations character_device_fops = {
 static int __init char_driver_init(void) {
     int ret;
 
-    pr_info("Initializing pseudo charater driver");
+    pr_info("initializing pseudo charater driver\n");
     /**
      * Dynamically allocate a new charater device region. This will later be used to tie the driver to the VFS.  
      * Parameters:
@@ -83,11 +85,11 @@ static int __init char_driver_init(void) {
      */
     
     if((ret = alloc_chrdev_region(&device_number, 0, 1, "pseudo_character_driver")) < 0) {
-        pr_err("Unable to allocate region for pseudo character device");
+        pr_err("unable to allocate region for pseudo character device\n");
         return ret;
     }
 
-    pr_info("Initialized pseudo character device with (major, minor) (%d, %d)", MAJOR(device_number), MINOR(device_number));
+    pr_info("Initialized pseudo character device with (major, minor) (%d, %d)\n", MAJOR(device_number), MINOR(device_number));
 
     /**
      * Initialize the charater device 
@@ -100,7 +102,7 @@ static int __init char_driver_init(void) {
      */
     character_device.owner = THIS_MODULE;
     if((ret = cdev_add(&character_device, device_number, 1)) < 0) { 
-        pr_err("Unable add pseudo character device");
+        pr_err("unable add pseudo character device\n");
         return ret;
     }
 
@@ -113,7 +115,7 @@ static int __init char_driver_init(void) {
 
 //done
 static void __exit char_driver_exit(void) {
-    pr_info("Cleaning up pseudo charater driver");
+    pr_info("cleaning up pseudo charater driver\n");
     cdev_del(&character_device);
     unregister_chrdev_region(device_number, 1);
 }

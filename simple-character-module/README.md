@@ -9,11 +9,12 @@ sudo insmod chardev.ko
 # find device numbers 
 
 Option 1:
-cat /proc/devices | grep pseudo
+
+dmesg | grep -i "pseudo"
 
 Option 2:
 
-dmesg | grep "Initialized pseudo"
+cat /proc/devices | grep -i "pseudo"
 
 # create device file (major = 241, minor = 0)
 
